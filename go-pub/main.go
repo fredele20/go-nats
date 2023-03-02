@@ -22,9 +22,17 @@ func main() {
 
 	defer nc.Close()
 
-	for i := 0; i < 1e5; i++ {
+	i := 0
+	for ; i < 1e5; i++ {
 		s := fmt.Sprintf("Message %v: data: %v", i, rg.Intn(10000))
 
-		nc.Publish("events.old", []byte(s))
+		// nc.Publish("events.old", []byte(s))
+		_, err := nc.Request("events.old", []byte(s), 1 * time.Second)
+		if err != nil {
+			logrus.Errorf("request failed for message %v: %v", i, err)
+			break
+		}
 	}
+
+	fmt.Printf("sent %v messages\n", i)
 }

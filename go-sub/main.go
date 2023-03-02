@@ -17,24 +17,26 @@ func main() {
 
 	defer nc.Close()
 
-	// sub, _ := nc.Subscribe("events.*", func(msg *nats.Msg) {
-	// 	fmt.Printf("message received on subjectL %v, data: %v\n", msg.Subject, string(msg.Data))
-	// })
+	count := 0
 
-	sub, _ := nc.SubscribeSync("events.*")
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	sub, _ := nc.Subscribe("events.*", func(msg *nats.Msg) {
+		count++
+		fmt.Printf("message received on subject: %v, data: %v\n", msg.Subject, string(msg.Data))
+		if msg.Reply != "" {
+			msg.Respond([]byte("got it"))
+		}
+	})
+
+	defer sub.Unsubscribe()
 
 	for {
-		if msg, _ := sub.NextMsg(10 * time.Second); msg != nil {
-			fmt.Printf("message received on subjectL %v, data: %v\n", msg.Subject, string(msg.Data))
-		} else {
+		old := count
+		time.Sleep(2 * time.Second)
+		if old == count {
 			break
 		}
 	}
 
-	// time.Sleep(10 * time.Minute)
+	fmt.Printf("processed %v messages\n", count)
 
-	sub.Unsubscribe()
 }
